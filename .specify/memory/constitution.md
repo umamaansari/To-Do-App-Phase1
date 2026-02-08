@@ -1,55 +1,65 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!-- SYNC IMPACT REPORT
+Version change: N/A -> 1.0.0
+Modified principles: N/A (new constitution)
+Added sections: Core Principles for Todo App, Additional Constraints, Development Workflow
+Removed sections: N/A
+Templates requiring updates: N/A (new project)
+Follow-up TODOs: None
+-->
+
+# Todo In-Memory Python Console App Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Minimalist Design
+Every feature should serve a clear purpose with minimal complexity; implementations must be simple, readable, and maintainable; Focus on core functionality without over-engineering solutions.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Console-First Interface
+The application must provide a clean command-line interface; Text-based input/output protocol: user commands → console display; Support human-readable formats with clear prompts and feedback.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Test-First (NON-NEGOTIABLE)
+TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced for all functionality.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Memory-Only Persistence
+All data remains in memory during application runtime; No file or database persistence required; Data is lost when application terminates; Focus on core logic without persistence complexity.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Error Handling
+Robust error handling required: Invalid inputs handled gracefully, clear error messages displayed, application must not crash due to user errors; Defensive programming practices enforced.
 
-### [PRINCIPLE_6_NAME]
+### VI. Clean Code Standards
+Code must follow Python PEP 8 standards; Functions should be small and focused; Meaningful variable and function names; Proper documentation for complex logic.
 
+## Additional Constraints
 
-[PRINCIPLE__DESCRIPTION]
+Technology stack requirements:
+- Python: 3.13 or newer
+- Package/environment manager: uv
+- External dependencies: none/minimal (only built-in modules preferred)
+- Project structure: src/, spec_history/, README.md, constitution file
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Data structure requirements:
+- Use a list of dictionaries for task storage
+- Each task: {"id": int, "title": str, "description": str, "completed": bool}
+- IDs must be integers and unique, starting from 1
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+Core features that must be implemented:
+- Add Task: Create new task with title (required) and description (optional)
+- Delete Task: Delete task by entering its ID
+- Update Task: Update title and/or description of existing task by ID
+- View/List Tasks: Show all current tasks in a readable format
+- Mark as Complete/Incomplete: Toggle completion status of a task by ID
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Development Workflow
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Use spec-driven development: constitution → detailed specs → code implementation
+- Save generated spec files in spec_history/ folder
+- Implement code based on the latest spec version
+- Support simple 'help' command showing available commands
+- 'quit' or 'exit' should close the application gracefully
+- Handle invalid inputs gracefully (show error message, don't crash)
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution serves as the foundational document for the Todo In-Memory Python Console App project; All development activities must comply with these principles; Amendments require documentation and team approval; All pull requests must verify compliance with these principles; Simplicity must be prioritized over complexity.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-02-05 | **Last Amended**: 2026-02-05

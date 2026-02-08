@@ -1,0 +1,558 @@
+openapi: 3.0.0
+info:
+  title: AI-Powered Task Manager API
+  description: API for the AI-Powered Task Manager for Umama featuring natural language processing, smart scheduling, and proactive notifications
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /tasks:
+    get:
+      summary: Get all tasks
+      description: Retrieve a list of all tasks with optional filtering by status, category, priority, or due date
+      parameters:
+        - name: status
+          in: query
+          description: Filter tasks by status (pending, completed, skipped)
+          schema:
+            type: string
+            enum: [pending, completed, skipped]
+        - name: category
+          in: query
+          description: Filter tasks by category
+          schema:
+            type: string
+        - name: priority
+          in: query
+          description: Filter tasks by priority (high, medium, low)
+          schema:
+            type: string
+            enum: [high, medium, low]
+        - name: due_after
+          in: query
+          description: Filter tasks due after this date (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: due_before
+          in: query
+          description: Filter tasks due before this date (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: A list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    
+    post:
+      summary: Create a new task
+      description: Create a new task using natural language input. The AI will parse the input to extract task details, due dates, recurrence patterns, and reminders.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                natural_language_input:
+                  type: string
+                  description: Natural language description of the task (e.g., "roz subah gym" or "har Monday meeting 10 AM")
+                category_hint:
+                  type: string
+                  description: Optional hint for task category
+                priority:
+                  type: string
+                  description: Optional priority override (high, medium, low)
+              required:
+                - natural_language_input
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input or parsing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{taskId}:
+    get:
+      summary: Get a specific task
+      description: Retrieve details of a specific task by its ID
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          
+    put:
+      summary: Update a task
+      description: Update an existing task's details
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+          
+    delete:
+      summary: Delete a task
+      description: Remove a task by its ID
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          description: Task not found
+
+  /tasks/{taskId}/complete:
+    post:
+      summary: Mark task as completed
+      description: Mark a task as completed and handle recurrence if applicable
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task marked as completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+
+  /tasks/{taskId}/skip:
+    post:
+      summary: Skip a recurring task instance
+      description: Mark a recurring task instance as skipped and schedule the next occurrence
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task instance skipped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+
+  /recurring-tasks/{taskId}/exceptions:
+    post:
+      summary: Add exception to recurring task
+      description: Add an exception to a recurring task (e.g., skip next Monday)
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                exception_date:
+                  type: string
+                  format: date
+                  description: Date to skip in the recurrence pattern
+                reason:
+                  type: string
+                  description: Optional reason for the exception
+              required:
+                - exception_date
+      responses:
+        '200':
+          description: Exception added to recurrence pattern
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurrencePattern'
+        '404':
+          description: Task not found
+
+  /tasks/{taskId}/reminders:
+    get:
+      summary: Get reminder settings for a task
+      description: Retrieve the reminder settings for a specific task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reminder settings for the task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderSettings'
+        '404':
+          description: Task not found
+          
+    put:
+      summary: Update reminder settings for a task
+      description: Modify the reminder settings for a specific task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: Unique identifier of the task
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderSettings'
+      responses:
+        '200':
+          description: Reminder settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderSettings'
+        '404':
+          description: Task not found
+
+  /ai/suggestions:
+    post:
+      summary: Get AI suggestions
+      description: Get AI-generated suggestions for task priority, category, or recurrence based on task content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_description:
+                  type: string
+                  description: Description of the task to analyze
+                suggestion_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [priority, category, recurrence]
+                  description: Types of suggestions to generate
+              required:
+                - task_description
+                - suggestion_types
+      responses:
+        '200':
+          description: AI-generated suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  priority_suggestion:
+                    type: string
+                    enum: [high, medium, low]
+                  category_suggestion:
+                    type: string
+                  recurrence_suggestion:
+                    type: string
+                    description: Suggested recurrence pattern in natural language
+
+  /notifications:
+    get:
+      summary: Get upcoming notifications
+      description: Retrieve a list of upcoming notifications
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of notifications to return
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of upcoming notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the task
+        title:
+          type: string
+          description: Task name/title (in English for clarity)
+        description:
+          type: string
+          description: Detailed description (can be in Urdu/English)
+        due_date:
+          type: string
+          format: date-time
+          description: Specific due date and time
+        status:
+          type: string
+          enum: [pending, completed, skipped]
+          description: Task status
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: Task priority level
+        category:
+          type: string
+          description: Task category (work, study, personal, health, finance)
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was last updated
+        completed_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was completed (null if not completed)
+        notes:
+          type: string
+          description: Additional notes or comments
+        recurrence_pattern:
+          $ref: '#/components/schemas/RecurrencePattern'
+        reminder_settings:
+          $ref: '#/components/schemas/ReminderSettings'
+        estimated_duration:
+          type: integer
+          description: Estimated time in minutes to complete the task
+      required:
+        - id
+        - title
+        - status
+        - priority
+        - created_at
+        - updated_at
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Updated task name/title
+        description:
+          type: string
+          description: Updated description
+        due_date:
+          type: string
+          format: date-time
+          description: Updated due date and time
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: Updated priority level
+        category:
+          type: string
+          description: Updated category
+        notes:
+          type: string
+          description: Updated notes or comments
+        estimated_duration:
+          type: integer
+          description: Updated estimated duration in minutes
+
+    RecurrencePattern:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the pattern
+        task_id:
+          type: string
+          description: Reference to the associated task
+        pattern_type:
+          type: string
+          enum: [daily, weekly, monthly, yearly, custom]
+          description: Type of recurrence pattern
+        interval:
+          type: integer
+          description: How often the pattern repeats (e.g., every 2 weeks)
+        days_of_week:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Days of week for weekly patterns (0=Monday, 6=Sunday)
+        day_of_month:
+          type: integer
+          minimum: 1
+          maximum: 31
+          description: Day of month for monthly patterns
+        exceptions:
+          type: array
+          items:
+            type: string
+            format: date
+          description: Specific dates to skip
+        end_condition:
+          $ref: '#/components/schemas/EndCondition'
+        next_occurrence:
+          type: string
+          format: date-time
+          description: When the next instance is due
+        created_at:
+          type: string
+          format: date-time
+          description: When the pattern was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the pattern was last updated
+
+    EndCondition:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [after_occurrences, on_date, never]
+          description: How the recurrence ends
+        count:
+          type: integer
+          minimum: 1
+          description: Number of occurrences (for "after_occurrences")
+        date:
+          type: string
+          format: date
+          description: Specific end date (for "on_date")
+
+    ReminderSettings:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the settings
+        task_id:
+          type: string
+          description: Reference to the associated task
+        method:
+          type: string
+          enum: [notification, email, sms]
+          description: Method of reminder
+        timing:
+          type: string
+          enum: [at_due_time, before_due, custom]
+          description: When to send the reminder
+        minutes_before:
+          type: integer
+          minimum: 1
+          description: Minutes before due time (for "before_due" and "custom")
+        enabled:
+          type: boolean
+          description: Whether reminders are active for this task
+        last_reminder_sent:
+          type: string
+          format: date-time
+          description: When the last reminder was sent
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the notification
+        task_id:
+          type: string
+          description: Reference to the associated task
+        title:
+          type: string
+          description: Title of the notification
+        message:
+          type: string
+          description: Content of the notification
+        scheduled_time:
+          type: string
+          format: date-time
+          description: When the notification is scheduled to be sent
+        sent:
+          type: boolean
+          description: Whether the notification has been sent
+        created_at:
+          type: string
+          format: date-time
+          description: When the notification was created
+
+    Error:
+      type: object
+      properties:
+        error_code:
+          type: string
+          description: Code identifying the error
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
